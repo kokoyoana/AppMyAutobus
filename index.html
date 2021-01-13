@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Time arrival bus</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js" integrity="sha256-S1J4GVHHDMiirir9qsXWc8ZWw74PHHafpsHp5PXtjTs=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <div class="container left" style="width: 380px; padding-top: 30px;">
+
+        <h3>Time arrival bus</h3>
+        <br>
+        <div class="form-group">
+            <label>Email MobilityLabs</label>
+            <input type="email" class="form-control" id="eInputEmail">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control" id="eInputPassword">
+            <small class="form-text text-muted"><a target="_blank" href="https://mobilitylabs.emtmadrid.es/">Get a
+                    user.</a></small>
+        </div>
+
+        <div class="form-group">
+            <label>STOP</label>
+            <input type="text" class="form-control" id="eInputID" value="1408">
+
+        </div>
+
+        <button type="submit" class="btn btn-primary" onclick="callApiRest();">Get Data</button>
+
+    </div>
+
+    <hr style="margin: 40px;">
+
+    <div class="container" id="pResponse" style="display: none;">
+       <label id="prueba"></label>
+        <h2>Response:</h2>
+
+        <p style="height:400px" id="textResponse"></p>
+ 
+
+    </div>
+
+
+    <script>
+        function callApiRest() {
+            var email = document.getElementById("eInputEmail").value;
+            var pass = document.getElementById("eInputPassword").value;
+
+            if (email == '' || pass == '') {
+                alert("Email or pass incorrect.");
+                return;
+            }
+
+            axios({
+                    method: 'get',
+                    url: 'https://openapi.emtmadrid.es/v1/mobilitylabs/user/login/',
+                    
+                    headers: {
+                        "email": email,
+                        "password": pass
+                    }
+                }).then(function(response) {
+                    console.log("accessToken: " + response.data.data[0].accessToken);
+                    callMethod(response.data.data[0].accessToken)
+                    console.log(response)
+                })
+
+                .catch(function(error) {
+                    alert("Invalid user.");
+                });
+
+        }
+
+        function callMethod(accessToken) {
+
+            var cid = document.getElementById("eInputID").value;
+            if (cid == null || cid == "") {
+                alert("Invalid ");
+            }
+
+            axios({
+                    method: 'post',
+                    url: "https://openapi.emtmadrid.es/v2/transport/busemtmad/stops/" + cid + "/arrives/",
+                    
+
+                    headers: {
+                        "accessToken": accessToken,
+                        "Content-Type": "application/json"
+                    },
+                    data: {
+                        "statistics": "N",
+                        "cultureInfo": "EN",
+                        "estimateArrive":"Y",
+                        "Text_StopRequired_YN": "Y",
+                        "Text_EstimationsRequired_YN": "Y",
+                        "Text_IncidencesRequired_YN": "Y",
+                        "DateTime_Referenced_Incidencies_YYYYMMDD": "20190923"
+                    }
+                    
+                }).then(function(response) {
+                    
+
+                    document.getElementById("pResponse").setAttribute("style", "display:block")
+                    document.getElementById("textResponse").innerHTML = JSON.stringify(response.data);
+                    document.getElementById("prueba").innerHTML=(response.data.data[0].Arrive[0].estimateArrive)
+
+                    console.log(response.data.data[0].Arrive[0])
+
+                })
+                .catch(function(error) {
+                    alert(error);
+                });
+        }
+    </script>
+
+</body>
+
+</html>
